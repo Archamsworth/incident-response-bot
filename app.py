@@ -1,5 +1,8 @@
 import gradio as gr
 import ollama
+from flask import Flask
+
+app = Flask(__name__)
 
 # Chatbot function
 def chatbot(message, history):
@@ -38,3 +41,4 @@ ui = gr.ChatInterface(
 
 if __name__ == "__main__":
     ui.launch(server_name="127.0.0.1", server_port=7860)
+
