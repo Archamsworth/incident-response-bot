@@ -1,5 +1,5 @@
-gradio
-llama_cpp
-torch
-transformers
-sentencepiece
+gradio==3.41.0
+llama_cpp==0.1.58
+torch==2.2.0
+transformers==4.40.0
+sentencepiece==0.1.99
