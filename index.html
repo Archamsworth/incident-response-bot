@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Incident Response Chatbot</title>
+  </head>
+  <body>
+    <h2>Incident Response Chatbot</h2>
+    <textarea id="input" rows="4" cols="50" placeholder="Describe your incident..."></textarea><br>
+    <button onclick="send()">Send</button>
+    <p><b>Bot:</b> <span id="output"></span></p>
+
+    <script>
+      async function send() {
+        let input = document.getElementById("input").value;
+        let res = await fetch("http://127.0.0.1:8000/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: input })
+        });
+        let data = await res.json();
+        document.getElementById("output").innerText = data.response;
+      }
+    </script>
+  </body>
+</html>
