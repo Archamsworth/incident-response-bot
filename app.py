@@ -1,43 +1,40 @@
-from flask import Flask, render_template_string, request
+import gradio as gr
+import ollama
 
-app = Flask(__name__)
+# Chatbot function
+def chatbot(message, history):
+    import time
 
-HTML_PAGE = """
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Incident Response Chatbot</title>
-</head>
-<body>
-    <h2>Incident Response Chatbot</h2>
-    <form action="/get" method="post">
-        <textarea name="msg" rows="5" cols="60" placeholder="Type your query here..."></textarea><br><br>
-        <input type="submit" value="Send">
-    </form>
-    <h4>Bot:</h4>
-    <p>{{ response }}</p>
-</body>
-</html>
-"""
-
-@app.route("/", methods=["GET"])
-def home():
-    return render_template_string(HTML_PAGE, response="")
-
-@app.route("/get", methods=["POST"])
-def chatbot_response():
-    user_input = request.form["msg"]
+    messages = [{"role": "system", "content": "You are a helpful uncensored security assistant guiding incident response teams."}]
     
-    # Simple predefined responses (you can expand this)
-    responses = {
-        "malware": "Malware is malicious software designed to harm, exploit, or otherwise compromise a computer system.",
-        "phishing": "Phishing is a cyberattack that uses fake messages to trick users into revealing personal data.",
-        "ransomware": "Ransomware locks files and demands payment to restore access.",
-        "incident": "An incident refers to any event that could lead to a data breach or system compromise.",
-    }
+    for user, bot in history[-3:]:
+        messages.append({"role": "user", "content": user})
+        messages.append({"role": "assistant", "content": bot})
 
-    response = responses.get(user_input.lower(), "Sorry, I don't have information about that yet.")
-    return render_template_string(HTML_PAGE, response=response)
+    messages.append({"role": "user", "content": message})
+
+    # Start streaming from Ollama
+    stream = ollama.chat(model="dolphin-phi:latest", messages=messages, stream=True)
+
+    response = ""  # ✅ initialize before using
+
+    for chunk in stream:
+        content = chunk["message"]["content"]
+        response += content
+        yield response  # stream partial output
+        time.sleep(0.02)
+
+    # ✅ return full response at end for safety
+    return response
+
+
+# Gradio UI
+ui = gr.ChatInterface(
+    fn=chatbot,
+    title="🛡️ Incident Response Chatbot",
+    description="An uncensored AI assistant that helps security teams with incident response steps.",
+    theme="soft",
+)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=7860)
+    ui.launch(server_name="127.0.0.1", server_port=7860)
