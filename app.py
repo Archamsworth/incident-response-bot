@@ -1,40 +1,22 @@
+import os
 import gradio as gr
-import ollama
+from llama_cpp import Llama
 
-# Chatbot function
-def chatbot(message, history):
-    import time
+# Load your model
+llm = Llama(model_path="model.bin")  # model.bin must be in the repo
 
-    messages = [{"role": "system", "content": "You are a helpful uncensored security assistant guiding incident response teams."}]
-    
-    for user, bot in history[-3:]:
-        messages.append({"role": "user", "content": user})
-        messages.append({"role": "assistant", "content": bot})
-
-    messages.append({"role": "user", "content": message})
-
-    # Start streaming from Ollama
-    stream = ollama.chat(model="dolphin-phi", messages=messages, stream=True)
-
-    response = ""  # ✅ initialize before using
-
-    for chunk in stream:
-        content = chunk["message"]["content"]
-        response += content
-        yield response  # stream partial output
-        time.sleep(0.02)
-
-    # ✅ return full response at end for safety
+def chatbot(user_input):
+    response = llm(user_input)
     return response
 
-
-# Gradio UI
-ui = gr.ChatInterface(
+iface = gr.Interface(
     fn=chatbot,
-    title="🛡️ Incident Response Chatbot",
-    description="An uncensored AI assistant that helps security teams with incident response steps.",
-    theme="soft",
+    inputs=gr.Textbox(lines=2, placeholder="Describe the incident..."),
+    outputs=gr.Textbox(label="Response"),
+    title="Incident Response Chatbot",
+    description="AI assistant for guiding security incident response steps"
 )
 
 if __name__ == "__main__":
-    ui.launch(server_name="127.0.0.1", server_port=7860)
+    port = int(os.environ.get("PORT", 7860))
+    iface.launch(server_name="0.0.0.0", server_port=port)
