@@ -1,22 +1,43 @@
-import os
-import gradio as gr
-from llama_cpp import Llama
+from flask import Flask, render_template_string, request
 
-# Load your model
-llm = Llama(model_path="model.bin")  # model.bin must be in the repo
+app = Flask(__name__)
 
-def chatbot(user_input):
-    response = llm(user_input)
-    return response
+HTML_PAGE = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Incident Response Chatbot</title>
+</head>
+<body>
+    <h2>Incident Response Chatbot</h2>
+    <form action="/get" method="post">
+        <textarea name="msg" rows="5" cols="60" placeholder="Type your query here..."></textarea><br><br>
+        <input type="submit" value="Send">
+    </form>
+    <h4>Bot:</h4>
+    <p>{{ response }}</p>
+</body>
+</html>
+"""
 
-iface = gr.Interface(
-    fn=chatbot,
-    inputs=gr.Textbox(lines=2, placeholder="Describe the incident..."),
-    outputs=gr.Textbox(label="Response"),
-    title="Incident Response Chatbot",
-    description="AI assistant for guiding security incident response steps"
-)
+@app.route("/", methods=["GET"])
+def home():
+    return render_template_string(HTML_PAGE, response="")
+
+@app.route("/get", methods=["POST"])
+def chatbot_response():
+    user_input = request.form["msg"]
+    
+    # Simple predefined responses (you can expand this)
+    responses = {
+        "malware": "Malware is malicious software designed to harm, exploit, or otherwise compromise a computer system.",
+        "phishing": "Phishing is a cyberattack that uses fake messages to trick users into revealing personal data.",
+        "ransomware": "Ransomware locks files and demands payment to restore access.",
+        "incident": "An incident refers to any event that could lead to a data breach or system compromise.",
+    }
+
+    response = responses.get(user_input.lower(), "Sorry, I don't have information about that yet.")
+    return render_template_string(HTML_PAGE, response=response)
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 7860))
-    iface.launch(server_name="0.0.0.0", server_port=port)
+    app.run(host="0.0.0.0", port=7860)
