@@ -3,3 +3,4 @@ llama-cpp-python
 torch>=2.5.0,<3.0
 transformers
 sentencepiece
+flask
